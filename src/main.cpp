@@ -4,6 +4,7 @@
 
 // Drawing utilities
 #include "falcon/display.h"
+#include "falcon/gba/key_input.h"
 
 void drawRect(u16* fb, int x, int y, int w, int h, u16 color) {
     for (int dy = 0; dy < h; ++dy) {
@@ -74,11 +75,10 @@ int main() {
 
     while (1) {
         VBlankIntrWait();
-        scanKeys();
-        u16 keys = keysHeld();
-        oldPlayer = player;
+    KeyInput keys = pollKeyInput();
+    oldPlayer = player;
 
-        player.move(keys);
+    player.move(keys);
 
         bool collided = false;
         for (int i = 0; i < numObstacles; i++) {

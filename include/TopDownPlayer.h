@@ -6,6 +6,7 @@
 #include <gba_interrupt.h>
 #include "Obstacle.h"
 #include "falcon/display.h"
+#include "falcon/gba/key_input.h"
 
 class TopDownPlayer {
 public:
@@ -15,6 +16,6 @@ public:
 	TopDownPlayer(int x, int y, int w, int h, u16 color);
 	void draw(u16* fb) const;
 	void erase(u16* fb) const;
-	void move(u16 keys);
+	void move(KeyInput keys);
 	bool collidesWith(const Obstacle& obs) const;
 };
