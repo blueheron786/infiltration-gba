@@ -1,78 +1,8 @@
-#include <gba.h>
-#include <gba_video.h>
-#include <gba_input.h>
-#include <gba_sound.h>
-#include <gba_systemcalls.h>
-#include <gba_interrupt.h>
 
+#include "TopDownPlayer.h"
+#include "Obstacle.h"
 
-class Obstacle {
-public:
-    int x, y, w, h;
-    u16 color;
-
-    Obstacle(int x, int y, int w, int h, u16 color)
-        : x(x), y(y), w(w), h(h), color(color) {}
-
-    void draw(u16* fb) const {
-        for (int dy = 0; dy < h; ++dy) {
-            for (int dx = 0; dx < w; ++dx) {
-                if (x + dx >= 0 && x + dx < 240 && y + dy >= 0 && y + dy < 160) {
-                    fb[(y + dy) * 240 + (x + dx)] = color;
-                }
-            }
-        }
-    }
-};
-
-class Player {
-public:
-    int x, y, w, h;
-    u16 color;
-
-    Player(int x, int y, int w, int h, u16 color)
-        : x(x), y(y), w(w), h(h), color(color) {}
-
-    void draw(u16* fb) const {
-        for (int dy = 0; dy < h; ++dy) {
-            for (int dx = 0; dx < w; ++dx) {
-                if (x + dx >= 0 && x + dx < 240 && y + dy >= 0 && y + dy < 160) {
-                    fb[(y + dy) * 240 + (x + dx)] = color;
-                }
-            }
-        }
-    }
-
-    void erase(u16* fb) const {
-        for (int dy = 0; dy < h; ++dy) {
-            for (int dx = 0; dx < w; ++dx) {
-                if (x + dx >= 0 && x + dx < 240 && y + dy >= 0 && y + dy < 160) {
-                    fb[(y + dy) * 240 + (x + dx)] = RGB5(0, 0, 0);
-                }
-            }
-        }
-    }
-
-    void move(u16 keys) {
-        if (keys & KEY_LEFT) x -= 2;
-        if (keys & KEY_RIGHT) x += 2;
-        if (keys & KEY_UP) y -= 2;
-        if (keys & KEY_DOWN) y += 2;
-        if (x < 0) x = 0;
-        if (x > 240 - w) x = 240 - w;
-        if (y < 0) y = 0;
-        if (y > 160 - h) y = 160 - h;
-    }
-
-    bool collidesWith(const Obstacle& obs) const {
-        return x < obs.x + obs.w &&
-               x + w > obs.x &&
-               y < obs.y + obs.h &&
-               y + h > obs.y;
-    }
-};
-
-// Function to draw a filled rectangle (used for buttons)
+// Function to draw a filled rectangle
 void drawRect(u16* fb, int x, int y, int w, int h, u16 color) {
     for (int dy = 0; dy < h; ++dy) {
         for (int dx = 0; dx < w; ++dx) {
@@ -121,7 +51,7 @@ int main() {
     REG_SOUNDCNT_H = 0x0002;
     u16* fb = (u16*)VRAM;
 
-    Player player(120, 80, 16, 16, RGB5(0, 15, 31));
+    TopDownPlayer player(120, 80, 16, 16, RGB5(0, 15, 31));
     Obstacle obstacles[] = {
         Obstacle(50, 50, 20, 20, RGB5(31, 31, 31)),
         Obstacle(180, 60, 20, 20, RGB5(31, 31, 31)),
@@ -130,7 +60,7 @@ int main() {
     };
     int numObstacles = sizeof(obstacles) / sizeof(obstacles[0]);
 
-    Player oldPlayer = player;
+    TopDownPlayer oldPlayer = player;
     u16 oldKeys = 0;
 
     for (int i = 0; i < 240 * 160; i++) {
