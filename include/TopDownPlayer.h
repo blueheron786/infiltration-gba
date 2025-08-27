@@ -5,6 +5,7 @@
 #include <gba_systemcalls.h>
 #include <gba_interrupt.h>
 #include "Obstacle.h"
+#include "falcon/display.h"
 
 class TopDownPlayer {
 public:

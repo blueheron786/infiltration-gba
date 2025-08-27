@@ -2,13 +2,13 @@
 #include "TopDownPlayer.h"
 #include "Obstacle.h"
 
-// Function to draw a filled rectangle
+// Drawing utilities
+#include "falcon/display.h"
+
 void drawRect(u16* fb, int x, int y, int w, int h, u16 color) {
     for (int dy = 0; dy < h; ++dy) {
         for (int dx = 0; dx < w; ++dx) {
-            if (x + dx >= 0 && x + dx < 240 && y + dy >= 0 && y + dy < 160) {
-                fb[(y + dy) * 240 + (x + dx)] = color;
-            }
+            drawPixel(fb, x + dx, y + dy, color);
         }
     }
 }

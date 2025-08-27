@@ -3,7 +3,9 @@
 #include <gba_input.h>
 #include <gba_sound.h>
 #include <gba_systemcalls.h>
+
 #include <gba_interrupt.h>
+#include "falcon/display.h"
 
 class Obstacle {
 public:

@@ -9,8 +9,12 @@ CXX = arm-none-eabi-g++
 
 SRC_DIR = src
 OBJ_DIR = obj
-SRC = $(wildcard $(SRC_DIR)/*.cpp)
-OBJ = $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
+
+# Recursively find all .cpp files in src and subfolders
+SRC = $(shell find $(SRC_DIR) -name '*.cpp')
+
+# Place object files in obj/ with matching subdirectory structure
+OBJ = $(patsubst $(SRC_DIR)/%, $(OBJ_DIR)/%, $(SRC:.cpp=.o))
 
  CFLAGS = -I$(LIBGBA)/include -Iinclude -mthumb -mthumb-interwork -O2
 LDFLAGS = -mthumb -mthumb-interwork -specs=gba.specs -L$(LIBGBA)/lib -lgba
@@ -36,7 +40,18 @@ $(TARGET).gba: $(BIN)
 $(ELF): $(OBJ) | $(OUT_DIR)
 	$(CXX) $(OBJ) -o $@ $(LDFLAGS)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
+
+# Pattern rule to compile any .cpp file in src or subfolders
+
+
+# Helper to extract directory from object file path
+define make-obj-dir
+  @mkdir -p $(dir $@)
+endef
+
+# Pattern rule to compile any .cpp file in src or subfolders
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+	$(call make-obj-dir)
 	$(CXX) $(CFLAGS) -c $< -o $@
 
 $(OBJ_DIR):
