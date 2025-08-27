@@ -5,7 +5,7 @@
 #include <gba_interrupt.h>
 
 #include "TopDownPlayer.h"
-#include "falcon/display.h"
+#include "falcon/gba/display.h"
 #include "falcon/gba/key_input.h"
 
 TopDownPlayer::TopDownPlayer(int x, int y, int w, int h, u16 color)
@@ -32,6 +32,7 @@ void TopDownPlayer::move(KeyInput keys) {
 	if ((keys & KeyInput::Right) != KeyInput::None) x += 2;
 	if ((keys & KeyInput::Up) != KeyInput::None) y -= 2;
 	if ((keys & KeyInput::Down) != KeyInput::None) y += 2;
+	
 	if (x < 0) x = 0;
 	if (x > SCREEN_WIDTH - w) x = SCREEN_WIDTH - w;
 	if (y < 0) y = 0;

@@ -3,7 +3,7 @@
 #include "Obstacle.h"
 
 // Drawing utilities
-#include "falcon/display.h"
+#include "falcon/gba/display.h"
 #include "falcon/gba/key_input.h"
 
 void drawRect(u16* fb, int x, int y, int w, int h, u16 color) {
@@ -25,21 +25,21 @@ void playThudSound() {
 }
 
 // Draw button states
-void drawButtons(u16* fb, u16 keys) {
+void drawButtons(u16* fb, KeyInput keys) {
     u16 grey = RGB5(15, 15, 15);
     u16 blue = RGB5(0, 15, 31);
     
     // A button (right)
-    drawRect(fb, 200, 120, 16, 16, (keys & KEY_A) ? blue : grey);
+    drawRect(fb, 200, 120, 16, 16, (keys & KeyInput::A) != KeyInput::None ? blue : grey);
     
     // B button (left of A)
-    drawRect(fb, 180, 130, 16, 16, (keys & KEY_B) ? blue : grey);
+    drawRect(fb, 180, 130, 16, 16, (keys & KeyInput::B) != KeyInput::None ? blue : grey);
     
     // L button (top left)
-    drawRect(fb, 10, 10, 20, 8, (keys & KEY_L) ? blue : grey);
+    drawRect(fb, 10, 10, 20, 8, (keys & KeyInput::L) != KeyInput::None ? blue : grey);
     
     // R button (top right)
-    drawRect(fb, 210, 10, 20, 8, (keys & KEY_R) ? blue : grey);
+    drawRect(fb, 210, 10, 20, 8, (keys & KeyInput::R) != KeyInput::None ? blue : grey);
 }
 
 
@@ -62,7 +62,7 @@ int main() {
     int numObstacles = sizeof(obstacles) / sizeof(obstacles[0]);
 
     TopDownPlayer oldPlayer = player;
-    u16 oldKeys = 0;
+    KeyInput oldKeys = KeyInput::None;
 
     for (int i = 0; i < 240 * 160; i++) {
         fb[i] = RGB5(0, 0, 0);
@@ -71,7 +71,7 @@ int main() {
         obstacles[i].draw(fb);
     }
     player.draw(fb);
-    drawButtons(fb, 0);
+    drawButtons(fb, KeyInput::None);
 
     while (1) {
         VBlankIntrWait();
