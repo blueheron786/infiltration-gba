@@ -6,16 +6,6 @@
 #include "falcon/gba/display.h"
 #include "falcon/gba/key_input.h"
 
-void drawRect(u16* fb, int x, int y, int w, int h, u16 color) {
-    for (int dy = 0; dy < h; ++dy) {
-        for (int dx = 0; dx < w; ++dx) {
-            drawPixel(fb, x + dx, y + dy, color);
-        }
-    }
-}
-
-// ...existing code...
-
 // Simple sound effect (beep)
 void playThudSound() {
     // Set up sound channel 1 for a simple square wave
@@ -75,10 +65,10 @@ int main() {
 
     while (1) {
         VBlankIntrWait();
-    KeyInput keys = pollKeyInput();
-    oldPlayer = player;
+        KeyInput keys = pollKeyInput();
+        oldPlayer = player;
 
-    player.move(keys);
+        player.move(keys);
 
         bool collided = false;
         for (int i = 0; i < numObstacles; i++) {
