@@ -1,4 +1,3 @@
-#include <gba.h>
 #include <gba_video.h>
 #include <gba_input.h>
 #include <gba_sound.h>
