@@ -1,6 +1,14 @@
 
+#include <gba_video.h>
+#include <gba_input.h>
+#include <gba_sound.h>
+#include <gba_systemcalls.h>
+#include <gba_interrupt.h>
+#include <gba_dma.h>
+#include <string.h>
 #include "TopDownPlayer.h"
 #include "Obstacle.h"
+#include "falcon/ecs/systems/CollisionSystem.h"
 
 // Drawing utilities
 #include "falcon/gba/display.h"
@@ -37,7 +45,7 @@ void drawButtons(u16* fb, KeyInput keys) {
 int main() {
     init();
 
-    // Initialize framebuffer
+    // Use VRAM directly but with proper timing
     u16* fb = (u16*)VRAM;
 
     TopDownPlayer player(120, 80, 16, 16, RGB5(0, 15, 31));
@@ -53,6 +61,7 @@ int main() {
     int oldPlayerY = player.y;
     KeyInput oldKeys = KeyInput::None;
 
+    // Initial clear and draw
     for (int i = 0; i < 240 * 160; i++) {
         fb[i] = RGB5(0, 0, 0);
     }
@@ -65,56 +74,68 @@ int main() {
     while (1) {
         VBlankIntrWait();
         KeyInput keys = pollKeyInput();
-        oldPlayerX = player.x;
-        oldPlayerY = player.y;
+        
+        int prevX = player.x;
+        int prevY = player.y;
 
         player.move(keys);
 
         bool collided = false;
         for (int i = 0; i < numObstacles; i++) {
             if (player.collidesWith(obstacles[i])) {
+                // Reset position on collision
                 player.x = oldPlayerX;
                 player.y = oldPlayerY;
+                // Update collision position after resetting position
+                auto collision = player.getComponent<Collision>();
+                if (collision) {
+                    collision->x = player.x;
+                    collision->y = player.y;
+                }
                 playThudSound();
                 collided = true;
                 break;
             }
         }
 
-        if (player.x != oldPlayerX || player.y != oldPlayerY) {
-            // Erase old position by drawing a black rectangle
+        // Store current position for next frame's collision detection
+        if (!collided) {
+            oldPlayerX = player.x;
+            oldPlayerY = player.y;
+        }
+
+        // Only redraw if player actually moved
+        if (player.x != prevX || player.y != prevY) {
+            // Erase old position
             auto rect = player.getComponent<ColourRect>();
             if (rect) {
                 for (int dy = 0; dy < rect->h; ++dy) {
                     for (int dx = 0; dx < rect->w; ++dx) {
-                        drawPixel(fb, oldPlayerX + dx, oldPlayerY + dy, RGB5(0, 0, 0));
+                        drawPixel(fb, prevX + dx, prevY + dy, RGB5(0, 0, 0));
                     }
                 }
             }
+            
+            // Redraw any obstacles that were at the old position
             for (int i = 0; i < numObstacles; i++) {
-                // Check if old position overlapped with obstacles and redraw them
                 auto obsRect = obstacles[i].getComponent<ColourRect>();
                 if (obsRect &&
-                    oldPlayerX < obstacles[i].x + obsRect->w &&
-                    oldPlayerX + (rect ? rect->w : 0) > obstacles[i].x &&
-                    oldPlayerY < obstacles[i].y + obsRect->h &&
-                    oldPlayerY + (rect ? rect->h : 0) > obstacles[i].y) {
+                    prevX < obstacles[i].x + obsRect->w &&
+                    prevX + (rect ? rect->w : 0) > obstacles[i].x &&
+                    prevY < obstacles[i].y + obsRect->h &&
+                    prevY + (rect ? rect->h : 0) > obstacles[i].y) {
                     obstacles[i].draw(fb);
                 }
             }
+            
+            // Draw player at new position
             player.draw(fb);
         }
 
         if (keys != oldKeys) {
-            drawRect(fb, 200, 120, 16, 16, RGB5(0, 0, 0));
-            drawRect(fb, 180, 130, 16, 16, RGB5(0, 0, 0));
-            drawRect(fb, 10, 10, 20, 8, RGB5(0, 0, 0));
-            drawRect(fb, 210, 10, 20, 8, RGB5(0, 0, 0));
             drawButtons(fb, keys);
             oldKeys = keys;
         }
-        oldPlayerX = player.x;
-        oldPlayerY = player.y;
     }
     return 0;
 }

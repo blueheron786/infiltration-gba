@@ -5,9 +5,9 @@
 #include <gba_systemcalls.h>
 
 #include <gba_interrupt.h>
-#include "falcon/gba/display.h"
 #include "falcon/ecs/entities/Node.h"
 #include "falcon/ecs/components/ColourRect.h"
+#include "falcon/ecs/components/Collision.h"
 
 class Obstacle : public Node {
 public:
