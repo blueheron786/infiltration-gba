@@ -14,8 +14,6 @@
 class TopDownPlayer : public Node {
 public:
     TopDownPlayer(int x, int y, int w, int h, u16 color);
-    void draw(u16* fb) const;
-    void erase(u16* fb) const;
     void move(KeyInput keys);
     bool collidesWith(const Obstacle& obs) const;
     

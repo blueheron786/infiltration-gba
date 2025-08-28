@@ -12,5 +12,4 @@
 class Obstacle : public Node {
 public:
     Obstacle(int x, int y, int w, int h, u16 color);
-    void draw(u16* fb) const;
 };

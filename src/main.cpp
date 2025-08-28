@@ -9,6 +9,7 @@
 #include "TopDownPlayer.h"
 #include "Obstacle.h"
 #include "falcon/ecs/systems/CollisionSystem.h"
+#include "falcon/ecs/systems/ColorRectDrawingSystem.h"
 
 // Drawing utilities
 #include "falcon/gba/display.h"
@@ -65,10 +66,14 @@ int main() {
     for (int i = 0; i < 240 * 160; i++) {
         fb[i] = RGB5(0, 0, 0);
     }
+    
+    // Draw all obstacles using the drawing system
     for (int i = 0; i < numObstacles; i++) {
-        obstacles[i].draw(fb);
+        ColorRectDrawingSystem::drawEntity(obstacles[i], fb);
     }
-    player.draw(fb);
+    
+    // Draw player using the drawing system
+    ColorRectDrawingSystem::drawEntity(player, fb);
     drawButtons(fb, KeyInput::None);
 
     while (1) {
@@ -106,14 +111,10 @@ int main() {
 
         // Only redraw if player actually moved
         if (player.x != prevX || player.y != prevY) {
-            // Erase old position
+            // Erase old position using the drawing system
             auto rect = player.getComponent<ColourRect>();
             if (rect) {
-                for (int dy = 0; dy < rect->h; ++dy) {
-                    for (int dx = 0; dx < rect->w; ++dx) {
-                        drawPixel(fb, prevX + dx, prevY + dy, RGB5(0, 0, 0));
-                    }
-                }
+                ColorRectDrawingSystem::eraseRect(fb, prevX, prevY, *rect);
             }
             
             // Redraw any obstacles that were at the old position
@@ -124,12 +125,12 @@ int main() {
                     prevX + (rect ? rect->w : 0) > obstacles[i].x &&
                     prevY < obstacles[i].y + obsRect->h &&
                     prevY + (rect ? rect->h : 0) > obstacles[i].y) {
-                    obstacles[i].draw(fb);
+                    ColorRectDrawingSystem::drawEntity(obstacles[i], fb);
                 }
             }
             
-            // Draw player at new position
-            player.draw(fb);
+            // Draw player at new position using the drawing system
+            ColorRectDrawingSystem::drawEntity(player, fb);
         }
 
         if (keys != oldKeys) {
