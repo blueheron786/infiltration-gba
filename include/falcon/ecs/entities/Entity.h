@@ -2,7 +2,7 @@
 #include <unordered_map>
 #include <typeindex>
 #include <memory>
-#include "Component.h"
+#include "../components/Component.h"
 
 class Entity {
 public:

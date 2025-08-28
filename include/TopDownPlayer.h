@@ -8,7 +8,7 @@
 #include "falcon/gba/display.h"
 #include "falcon/gba/key_input.h"
 #include "falcon/ecs/entities/Node.h"
-#include "falcon/ecs/entities/ColourRect.h"
+#include "falcon/ecs/components/ColourRect.h"
 
 class TopDownPlayer : public Node {
 public:
