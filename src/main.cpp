@@ -1,3 +1,5 @@
+#define SCREEN_WIDTH 240
+#define SCREEN_HEIGHT 160
 #include <cstdio>
 
 #include <gba_video.h>
@@ -116,9 +118,9 @@ int main() {
 
         // Clamp to screen
         if (playerX < 0) playerX = 0;
-        if (playerX > 240-16) playerX = 240-16;
+        if (playerX > SCREEN_WIDTH-16) playerX = SCREEN_WIDTH-16;
         if (playerY < 0) playerY = 0;
-        if (playerY > 160-16) playerY = 160-16;
+        if (playerY > SCREEN_HEIGHT-16) playerY = SCREEN_HEIGHT-16;
 
         // Update OAM for player
         oam[0].attr0 = (oam[0].attr0 & 0xFF00) | (playerY & 0xFF);
