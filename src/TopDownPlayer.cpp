@@ -49,10 +49,11 @@ void TopDownPlayer::move(KeyInput keys) {
 }
 
 bool TopDownPlayer::collidesWith(const Obstacle& obs) const {
-	auto rect = getComponent<ColourRect>();
-	if (!rect) return false;
-	return x < obs.x + obs.w &&
-		   x + rect->w > obs.x &&
-		   y < obs.y + obs.h &&
-		   y + rect->h > obs.y;
+    auto rect = getComponent<ColourRect>();
+    auto obsRect = obs.getComponent<ColourRect>();
+    if (!rect || !obsRect) return false;
+    return x < obs.x + obsRect->w &&
+           x + rect->w > obs.x &&
+           y < obs.y + obsRect->h &&
+           y + rect->h > obs.y;
 }

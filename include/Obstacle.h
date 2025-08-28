@@ -6,12 +6,11 @@
 
 #include <gba_interrupt.h>
 #include "falcon/gba/display.h"
+#include "falcon/ecs/entities/Node.h"
+#include "falcon/ecs/components/ColourRect.h"
 
-class Obstacle {
+class Obstacle : public Node {
 public:
-	int x, y, w, h;
-	u16 color;
-
-	Obstacle(int x, int y, int w, int h, u16 color);
-	void draw(u16* fb) const;
+    Obstacle(int x, int y, int w, int h, u16 color);
+    void draw(u16* fb) const;
 };

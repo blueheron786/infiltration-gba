@@ -93,9 +93,11 @@ int main() {
             }
             for (int i = 0; i < numObstacles; i++) {
                 // Check if old position overlapped with obstacles and redraw them
-                if (oldPlayerX < obstacles[i].x + obstacles[i].w &&
+                auto obsRect = obstacles[i].getComponent<ColourRect>();
+                if (obsRect &&
+                    oldPlayerX < obstacles[i].x + obsRect->w &&
                     oldPlayerX + (rect ? rect->w : 0) > obstacles[i].x &&
-                    oldPlayerY < obstacles[i].y + obstacles[i].h &&
+                    oldPlayerY < obstacles[i].y + obsRect->h &&
                     oldPlayerY + (rect ? rect->h : 0) > obstacles[i].y) {
                     obstacles[i].draw(fb);
                 }
