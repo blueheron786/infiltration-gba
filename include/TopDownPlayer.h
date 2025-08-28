@@ -7,10 +7,11 @@
 #include "Obstacle.h"
 #include "falcon/gba/display.h"
 #include "falcon/gba/key_input.h"
+#include "falcon/ecs/entities/Node.h"
 
-class TopDownPlayer {
+class TopDownPlayer : public Node {
 public:
-	int x, y, w, h;
+	int w, h;
 	u16 color;
 
 	TopDownPlayer(int x, int y, int w, int h, u16 color);

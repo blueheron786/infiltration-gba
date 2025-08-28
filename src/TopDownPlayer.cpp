@@ -9,7 +9,7 @@
 #include "falcon/gba/key_input.h"
 
 TopDownPlayer::TopDownPlayer(int x, int y, int w, int h, u16 color)
-	: x(x), y(y), w(w), h(h), color(color) {}
+	: Node(x, y), w(w), h(h), color(color) {}
 
 void TopDownPlayer::draw(u16* fb) const {
 	for (int dy = 0; dy < h; ++dy) {
