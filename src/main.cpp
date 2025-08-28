@@ -25,13 +25,16 @@ public:
     }
 };
 
+enum Direction { DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT };
+
 class Player {
 public:
     int x, y, w, h;
     u16 color;
+    Direction dir;
 
     Player(int x, int y, int w, int h, u16 color)
-        : x(x), y(y), w(w), h(h), color(color) {}
+        : x(x), y(y), w(w), h(h), color(color), dir(DIR_RIGHT) {}
 
     void draw(u16* fb) const {
         for (int dy = 0; dy < h; ++dy) {
@@ -54,10 +57,10 @@ public:
     }
 
     void move(u16 keys) {
-        if (keys & KEY_LEFT) x -= 2;
-        if (keys & KEY_RIGHT) x += 2;
-        if (keys & KEY_UP) y -= 2;
-        if (keys & KEY_DOWN) y += 2;
+        if (keys & KEY_LEFT) { x -= 2; dir = DIR_LEFT; }
+        if (keys & KEY_RIGHT) { x += 2; dir = DIR_RIGHT; }
+        if (keys & KEY_UP) { y -= 2; dir = DIR_UP; }
+        if (keys & KEY_DOWN) { y += 2; dir = DIR_DOWN; }
         if (x < 0) x = 0;
         if (x > 240 - w) x = 240 - w;
         if (y < 0) y = 0;
@@ -69,6 +72,70 @@ public:
                x + w > obs.x &&
                y < obs.y + obs.h &&
                y + h > obs.y;
+    }
+};
+
+class Bullet {
+public:
+    int x, y, w, h, dx, dy;
+    bool active;
+    u16 color;
+
+    Bullet() : x(0), y(0), w(4), h(4), dx(0), dy(0), active(false), color(RGB5(31,0,0)) {}
+
+    void spawn(int px, int py, Direction dir) {
+        x = px + 6; y = py + 6; // center of player
+        w = 4; h = 4;
+        color = RGB5(31,0,0);
+        active = true;
+        switch (dir) {
+            case DIR_UP: dx = 0; dy = -4; break;
+            case DIR_DOWN: dx = 0; dy = 4; break;
+            case DIR_LEFT: dx = -4; dy = 0; break;
+            case DIR_RIGHT: dx = 4; dy = 0; break;
+        }
+    }
+
+    void move() {
+        x += dx;
+        y += dy;
+    }
+
+    void draw(u16* fb) const {
+        if (!active) return;
+        for (int dy_ = 0; dy_ < h; ++dy_) {
+            for (int dx_ = 0; dx_ < w; ++dx_) {
+                int px = x + dx_;
+                int py = y + dy_;
+                if (px >= 0 && px < 240 && py >= 0 && py < 160) {
+                    fb[py * 240 + px] = color;
+                }
+            }
+        }
+    }
+
+    void erase(u16* fb) const {
+        if (!active) return;
+        for (int dy_ = 0; dy_ < h; ++dy_) {
+            for (int dx_ = 0; dx_ < w; ++dx_) {
+                int px = x + dx_;
+                int py = y + dy_;
+                if (px >= 0 && px < 240 && py >= 0 && py < 160) {
+                    fb[py * 240 + px] = RGB5(0,0,0);
+                }
+            }
+        }
+    }
+
+    bool collidesWith(const Obstacle& obs) const {
+        return x < obs.x + obs.w &&
+               x + w > obs.x &&
+               y < obs.y + obs.h &&
+               y + h > obs.y;
+    }
+
+    bool offScreen() const {
+        return x < 0 || x + w > 240 || y < 0 || y + h > 160;
     }
 };
 
@@ -133,6 +200,13 @@ int main() {
     Player oldPlayer = player;
     u16 oldKeys = 0;
 
+    const int MAX_BULLETS = 8;
+    Bullet bullets[MAX_BULLETS];
+    Bullet oldBullets[MAX_BULLETS];
+    unsigned int frameCount = 0;
+    unsigned int lastFireFrame = 0;
+    const unsigned int fireInterval = 15; // ~250ms at 60fps
+
     for (int i = 0; i < 240 * 160; i++) {
         fb[i] = RGB5(0, 0, 0);
     }
@@ -143,10 +217,12 @@ int main() {
     drawButtons(fb, 0);
 
     while (1) {
-        VBlankIntrWait();
+    VBlankIntrWait();
+    frameCount++;
         scanKeys();
         u16 keys = keysHeld();
         oldPlayer = player;
+    for (int i = 0; i < MAX_BULLETS; ++i) oldBullets[i] = bullets[i];
 
         player.move(keys);
 
@@ -160,6 +236,33 @@ int main() {
             }
         }
 
+        // Bullet logic: fire on hold every ~250ms, allow multiple bullets
+        if ((keys & KEY_A) && (frameCount - lastFireFrame >= fireInterval)) {
+            for (int i = 0; i < MAX_BULLETS; ++i) {
+                if (!bullets[i].active) {
+                    bullets[i].spawn(player.x, player.y, player.dir);
+                    lastFireFrame = frameCount;
+                    break;
+                }
+            }
+        }
+
+        for (int i = 0; i < MAX_BULLETS; ++i) {
+            if (bullets[i].active) {
+                bullets[i].erase(fb);
+                bullets[i].move();
+                // Check collision with obstacles
+                for (int j = 0; j < numObstacles; j++) {
+                    if (bullets[i].collidesWith(obstacles[j])) {
+                        bullets[i].active = false;
+                        break;
+                    }
+                }
+                if (bullets[i].offScreen()) bullets[i].active = false;
+                if (bullets[i].active) bullets[i].draw(fb);
+            }
+        }
+
         if (player.x != oldPlayer.x || player.y != oldPlayer.y) {
             oldPlayer.erase(fb);
             for (int i = 0; i < numObstacles; i++) {
@@ -168,6 +271,12 @@ int main() {
                 }
             }
             player.draw(fb);
+        }
+
+        for (int i = 0; i < MAX_BULLETS; ++i) {
+            if (oldBullets[i].active && !bullets[i].active) {
+                oldBullets[i].erase(fb);
+            }
         }
 
         if (keys != oldKeys) {
