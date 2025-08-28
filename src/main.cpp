@@ -63,11 +63,6 @@ int main() {
         oam[1+i].attr1 = ATTR1_SIZE_16 | (obsX[i] & 0x1FF);
         oam[1+i].attr2 = 32/32; // tile 1, palette 0
     }
-    // FPS: 32x8 sprite at 8,6 (OBJ 9)
-    oam[9].attr0 = ATTR0_COLOR_16 | (6 & 0xFF);
-    oam[9].attr1 = ATTR1_SIZE_32 | (8 & 0x1FF);
-    oam[9].attr2 = 96/32 | (1<<12); // tile 3, palette 1
-    init();
 
     // --- Sprite setup ---
     // Set mode 0, enable OBJ, 1D mapping
