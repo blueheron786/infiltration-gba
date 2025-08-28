@@ -6,10 +6,12 @@
 #include <gba_interrupt.h>
 #include <gba_dma.h>
 #include <string.h>
+#include <vector>
 #include "TopDownPlayer.h"
 #include "Obstacle.h"
 #include "falcon/ecs/systems/CollisionSystem.h"
 #include "falcon/ecs/systems/ColorRectDrawingSystem.h"
+#include "falcon/ecs/systems/MovementSystem.h"
 
 // Drawing utilities
 #include "falcon/gba/display.h"
@@ -83,7 +85,9 @@ int main() {
         int prevX = player.x;
         int prevY = player.y;
 
-        player.move(keys);
+        // Move all player-controlled entities
+        std::vector<Entity*> entities = { &player };
+        MovementSystem::movePlayerControlledEntities(entities, keys);
 
         bool collided = false;
         for (int i = 0; i < numObstacles; i++) {

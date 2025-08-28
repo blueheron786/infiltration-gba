@@ -10,13 +10,10 @@
 #include "falcon/ecs/entities/Node.h"
 #include "falcon/ecs/components/ColourRect.h"
 #include "falcon/ecs/components/Collision.h"
+#include "falcon/ecs/components/PlayerControlled.h"
 
 class TopDownPlayer : public Node {
 public:
     TopDownPlayer(int x, int y, int w, int h, u16 color);
-    void move(KeyInput keys);
     bool collidesWith(const Obstacle& obs) const;
-    
-private:
-    void updateCollisionPosition();
 };
