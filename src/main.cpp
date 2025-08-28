@@ -1,3 +1,4 @@
+#include <cstdio>
 
 #include <gba_video.h>
 #include <gba_input.h>
@@ -49,6 +50,38 @@ void drawButtons(u16* fb, KeyInput keys) {
 
 
 int main() {
+    OBJATTR *oam = OAM;
+    // FPS tile: 32x8, will be updated dynamically
+    static u32 fpsTile[16] = {0};
+    // 8x8 font for digits 0-9 (each byte is a row, LSB left)
+    static const u8 digitFont[10][8] = {
+        {0x3C,0x66,0x6E,0x7E,0x76,0x66,0x3C,0x00}, // 0
+        {0x18,0x38,0x18,0x18,0x18,0x18,0x7E,0x00}, // 1
+        {0x3C,0x66,0x06,0x1C,0x30,0x66,0x7E,0x00}, // 2
+        {0x3C,0x66,0x06,0x1C,0x06,0x66,0x3C,0x00}, // 3
+        {0x0C,0x1C,0x3C,0x6C,0x7E,0x0C,0x0C,0x00}, // 4
+        {0x7E,0x60,0x7C,0x06,0x06,0x66,0x3C,0x00}, // 5
+        {0x3C,0x60,0x7C,0x66,0x66,0x66,0x3C,0x00}, // 6
+        {0x7E,0x06,0x0C,0x18,0x30,0x30,0x30,0x00}, // 7
+        {0x3C,0x66,0x66,0x3C,0x66,0x66,0x3C,0x00}, // 8
+        {0x3C,0x66,0x66,0x3E,0x06,0x0C,0x38,0x00}  // 9
+    };
+    // OAM setup (after OBJATTR *oam = OAM;)
+    // Player is OBJ 0, obstacles are OBJ 1-4
+    oam[0].attr0 = ATTR0_COLOR_16 | ATTR0_SQUARE | (80 & 0xFF); // y
+    oam[0].attr1 = ATTR1_SIZE_16 | (120 & 0x1FF); // x
+    oam[0].attr2 = 0; // tile 0, palette 0
+    int obsX[4] = {50,180,100,160};
+    int obsY[4] = {50,60,120,30};
+    for (int i = 0; i < 4; ++i) {
+        oam[1+i].attr0 = ATTR0_COLOR_16 | ATTR0_SQUARE | (obsY[i] & 0xFF);
+        oam[1+i].attr1 = ATTR1_SIZE_16 | (obsX[i] & 0x1FF);
+        oam[1+i].attr2 = 32/32; // tile 1, palette 0
+    }
+    // FPS: 32x8 sprite at 8,6 (OBJ 9)
+    oam[9].attr0 = ATTR0_COLOR_16 | (6 & 0xFF);
+    oam[9].attr1 = ATTR1_SIZE_32 | (8 & 0x1FF);
+    oam[9].attr2 = 96/32 | (1<<12); // tile 3, palette 1
     init();
 
     // --- Sprite setup ---
@@ -72,15 +105,11 @@ int main() {
     DMA3COPY(playerTile, SPRITE_GFX, 32 | DMA32 | DMA_IMMEDIATE);
     DMA3COPY(obstacleTile, SPRITE_GFX+32, 32 | DMA32 | DMA_IMMEDIATE);
 
-    // OAM setup: player is OBJ 0, obstacles are OBJ 1-4
-    OBJATTR *oam = OAM;
-    // Player
+    // OAM setup
+    // Player is OBJ 0, obstacles are OBJ 1-4
     oam[0].attr0 = ATTR0_COLOR_16 | ATTR0_SQUARE | (80 & 0xFF); // y
     oam[0].attr1 = ATTR1_SIZE_16 | (120 & 0x1FF); // x
     oam[0].attr2 = 0; // tile 0, palette 0
-    // Obstacles
-    int obsX[4] = {50,180,100,160};
-    int obsY[4] = {50,60,120,30};
     for (int i = 0; i < 4; ++i) {
         oam[1+i].attr0 = ATTR0_COLOR_16 | ATTR0_SQUARE | (obsY[i] & 0xFF);
         oam[1+i].attr1 = ATTR1_SIZE_16 | (obsX[i] & 0x1FF);
@@ -111,6 +140,33 @@ int main() {
             fps = frameCount;
             frameCount = 0;
             lastTick = 0;
+            // Update FPS tile to show digits using 8x8 font
+            for (int i = 0; i < 16; ++i) fpsTile[i] = 0;
+            int val = fps;
+            int digits[3] = {0};
+            int numDigits = 0;
+            do {
+                digits[numDigits++] = val % 10;
+                val /= 10;
+            } while (val && numDigits < 3);
+            // Draw digits right-aligned in 32x8 tile (up to 3 digits)
+            for (int d = 0; d < numDigits; ++d) {
+                int digit = digits[d];
+                for (int row = 0; row < 8; ++row) {
+                    u8 bits = digitFont[digit][row];
+                    for (int col = 0; col < 8; ++col) {
+                        if (bits & (1 << (7-col))) {
+                            // Each u32 is a row of 8 pixels, 4bpp (so 8 pixels per u32)
+                            // Place digits right-aligned
+                            int x = 24 - d*8 + col;
+                            if (x >= 0 && x < 32) {
+                                ((u8*)fpsTile)[row*32 + x] = 2; // blue
+                            }
+                        }
+                    }
+                }
+            }
+            DMA3COPY(fpsTile, SPRITE_GFX+96, 16 | DMA32 | DMA_IMMEDIATE); // tile 3
         }
 
         int prevX = playerX;
@@ -131,10 +187,6 @@ int main() {
         // Update OAM for player
         oam[0].attr0 = (oam[0].attr0 & 0xFF00) | (playerY & 0xFF);
         oam[0].attr1 = (oam[0].attr1 & 0xFE00) | (playerX & 0x1FF);
-
-        // Draw FPS counter in top-left (still software, for now)
-        // (You may want to convert this to a sprite for best perf)
-        // ...existing code for FPS/UI drawing...
     }
     return 0;
 }
