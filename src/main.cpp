@@ -13,10 +13,12 @@
 #include "falcon/ecs/systems/ColorRectDrawingSystem.h"
 #include "falcon/ecs/systems/MovementSystem.h"
 
+
 // Drawing utilities
 #include "falcon/gba/display.h"
 #include "falcon/gba/key_input.h"
 #include "falcon/gba/falcon.h"
+#include "falcon/gba/draw_text.h"
 
 // Simple sound effect (beep)
 void playThudSound() {
@@ -58,6 +60,11 @@ int main() {
         Obstacle(100, 120, 20, 20, RGB5(31, 31, 31)),
         Obstacle(160, 30, 20, 20, RGB5(31, 31, 31))
     };
+    // FPS counter variables
+    int frameCount = 0;
+    int fps = 0;
+    u32 lastTick = REG_VCOUNT; // Not a timer, but will use VBlank count
+    u32 lastSecond = 0;
     int numObstacles = sizeof(obstacles) / sizeof(obstacles[0]);
 
     int oldPlayerX = player.x;
@@ -81,6 +88,15 @@ int main() {
     while (1) {
         VBlankIntrWait();
         KeyInput keys = pollKeyInput();
+
+        // FPS logic: count frames, update FPS every ~60 frames (1 second at 60Hz)
+        frameCount++;
+        lastTick++;
+        if (lastTick >= 60) {
+            fps = frameCount;
+            frameCount = 0;
+            lastTick = 0;
+        }
         
         int prevX = player.x;
         int prevY = player.y;
@@ -136,6 +152,10 @@ int main() {
             // Draw player at new position using the drawing system
             ColorRectDrawingSystem::drawEntity(player, fb);
         }
+
+    // Draw FPS counter in top-left (erase previous by overdrawing black, then draw new value)
+    drawRect(fb, 4, 4, 40, 10, RGB5(0,0,0)); // Erase area
+    drawInt(fb, 8, 6, fps, RGB5(31,31,0));
 
         if (keys != oldKeys) {
             drawButtons(fb, keys);

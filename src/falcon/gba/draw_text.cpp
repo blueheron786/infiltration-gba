@@ -1,0 +1,45 @@
+#include "falcon/gba/draw_text.h"
+#include "falcon/gba/display.h"
+
+// 5x7 font for digits 0-9
+static const unsigned char digitFont[10][7] = {
+    {0x1E,0x33,0x37,0x3B,0x33,0x33,0x1E}, // 0
+    {0x0C,0x1C,0x0C,0x0C,0x0C,0x0C,0x1E}, // 1
+    {0x1E,0x33,0x03,0x06,0x0C,0x18,0x3F}, // 2
+    {0x1E,0x33,0x03,0x0E,0x03,0x33,0x1E}, // 3
+    {0x06,0x0E,0x1E,0x36,0x3F,0x06,0x06}, // 4
+    {0x3F,0x30,0x3E,0x03,0x03,0x33,0x1E}, // 5
+    {0x0E,0x18,0x30,0x3E,0x33,0x33,0x1E}, // 6
+    {0x3F,0x03,0x06,0x0C,0x18,0x18,0x18}, // 7
+    {0x1E,0x33,0x33,0x1E,0x33,0x33,0x1E}, // 8
+    {0x1E,0x33,0x33,0x1F,0x03,0x06,0x1C}  // 9
+};
+
+void drawDigit(u16* fb, int x, int y, int digit, u16 color) {
+    if (digit < 0 || digit > 9) return;
+    for (int row = 0; row < 7; ++row) {
+        unsigned char bits = digitFont[digit][row];
+        for (int col = 0; col < 5; ++col) {
+            if (bits & (1 << (4-col))) {
+                drawPixel(fb, x+col, y+row, color);
+            }
+        }
+    }
+}
+
+void drawInt(u16* fb, int x, int y, int value, u16 color) {
+    if (value == 0) {
+        drawDigit(fb, x, y, 0, color);
+        return;
+    }
+    int digits[10];
+    int n = 0;
+    int v = value;
+    while (v > 0 && n < 10) {
+        digits[n++] = v % 10;
+        v /= 10;
+    }
+    for (int i = n-1; i >= 0; --i) {
+        drawDigit(fb, x + (n-1-i)*6, y, digits[i], color);
+    }
+}
