@@ -8,12 +8,10 @@
 #include "falcon/gba/display.h"
 #include "falcon/gba/key_input.h"
 #include "falcon/ecs/entities/Node.h"
+#include "falcon/ecs/entities/ColourRect.h"
 
 class TopDownPlayer : public Node {
 public:
-	int w, h;
-	u16 color;
-
 	TopDownPlayer(int x, int y, int w, int h, u16 color);
 	void draw(u16* fb) const;
 	void erase(u16* fb) const;

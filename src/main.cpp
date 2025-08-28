@@ -49,7 +49,8 @@ int main() {
     };
     int numObstacles = sizeof(obstacles) / sizeof(obstacles[0]);
 
-    TopDownPlayer oldPlayer = player;
+    int oldPlayerX = player.x;
+    int oldPlayerY = player.y;
     KeyInput oldKeys = KeyInput::None;
 
     for (int i = 0; i < 240 * 160; i++) {
@@ -64,24 +65,38 @@ int main() {
     while (1) {
         VBlankIntrWait();
         KeyInput keys = pollKeyInput();
-        oldPlayer = player;
+        oldPlayerX = player.x;
+        oldPlayerY = player.y;
 
         player.move(keys);
 
         bool collided = false;
         for (int i = 0; i < numObstacles; i++) {
             if (player.collidesWith(obstacles[i])) {
-                player = oldPlayer;
+                player.x = oldPlayerX;
+                player.y = oldPlayerY;
                 playThudSound();
                 collided = true;
                 break;
             }
         }
 
-        if (player.x != oldPlayer.x || player.y != oldPlayer.y) {
-            oldPlayer.erase(fb);
+        if (player.x != oldPlayerX || player.y != oldPlayerY) {
+            // Erase old position by drawing a black rectangle
+            auto rect = player.getComponent<ColourRect>();
+            if (rect) {
+                for (int dy = 0; dy < rect->h; ++dy) {
+                    for (int dx = 0; dx < rect->w; ++dx) {
+                        drawPixel(fb, oldPlayerX + dx, oldPlayerY + dy, RGB5(0, 0, 0));
+                    }
+                }
+            }
             for (int i = 0; i < numObstacles; i++) {
-                if (oldPlayer.collidesWith(obstacles[i])) {
+                // Check if old position overlapped with obstacles and redraw them
+                if (oldPlayerX < obstacles[i].x + obstacles[i].w &&
+                    oldPlayerX + (rect ? rect->w : 0) > obstacles[i].x &&
+                    oldPlayerY < obstacles[i].y + obstacles[i].h &&
+                    oldPlayerY + (rect ? rect->h : 0) > obstacles[i].y) {
                     obstacles[i].draw(fb);
                 }
             }
@@ -96,7 +111,8 @@ int main() {
             drawButtons(fb, keys);
             oldKeys = keys;
         }
-        oldPlayer = player;
+        oldPlayerX = player.x;
+        oldPlayerY = player.y;
     }
     return 0;
 }

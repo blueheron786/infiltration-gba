@@ -9,39 +9,50 @@
 #include "falcon/gba/key_input.h"
 
 TopDownPlayer::TopDownPlayer(int x, int y, int w, int h, u16 color)
-	: Node(x, y), w(w), h(h), color(color) {}
+	: Node(x, y)
+{
+	addComponent<ColourRect>(w, h, color);
+}
 
 void TopDownPlayer::draw(u16* fb) const {
-	for (int dy = 0; dy < h; ++dy) {
-		for (int dx = 0; dx < w; ++dx) {
-			drawPixel(fb, x + dx, y + dy, color);
+	auto rect = getComponent<ColourRect>();
+	if (!rect) return;
+	for (int dy = 0; dy < rect->h; ++dy) {
+		for (int dx = 0; dx < rect->w; ++dx) {
+			drawPixel(fb, x + dx, y + dy, rect->color);
 		}
 	}
 }
 
 void TopDownPlayer::erase(u16* fb) const {
-	for (int dy = 0; dy < h; ++dy) {
-		for (int dx = 0; dx < w; ++dx) {
+	auto rect = getComponent<ColourRect>();
+	if (!rect) return;
+	for (int dy = 0; dy < rect->h; ++dy) {
+		for (int dx = 0; dx < rect->w; ++dx) {
 			drawPixel(fb, x + dx, y + dy, RGB5(0, 0, 0));
 		}
 	}
 }
 
 void TopDownPlayer::move(KeyInput keys) {
+	auto rect = getComponent<ColourRect>();
+	if (!rect) return;
 	if ((keys & KeyInput::Left) != KeyInput::None) x -= 2;
 	if ((keys & KeyInput::Right) != KeyInput::None) x += 2;
 	if ((keys & KeyInput::Up) != KeyInput::None) y -= 2;
 	if ((keys & KeyInput::Down) != KeyInput::None) y += 2;
-	
+
 	if (x < 0) x = 0;
-	if (x > SCREEN_WIDTH - w) x = SCREEN_WIDTH - w;
+	if (x > SCREEN_WIDTH - rect->w) x = SCREEN_WIDTH - rect->w;
 	if (y < 0) y = 0;
-	if (y > SCREEN_HEIGHT - h) y = SCREEN_HEIGHT - h;
+	if (y > SCREEN_HEIGHT - rect->h) y = SCREEN_HEIGHT - rect->h;
 }
 
 bool TopDownPlayer::collidesWith(const Obstacle& obs) const {
+	auto rect = getComponent<ColourRect>();
+	if (!rect) return false;
 	return x < obs.x + obs.w &&
-		   x + w > obs.x &&
+		   x + rect->w > obs.x &&
 		   y < obs.y + obs.h &&
-		   y + h > obs.y;
+		   y + rect->h > obs.y;
 }
