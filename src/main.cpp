@@ -51,21 +51,6 @@ void drawButtons(u16* fb, KeyInput keys) {
 
 int main() {
     OBJATTR *oam = OAM;
-    // FPS tile: 32x8, will be updated dynamically
-    static u32 fpsTile[16] = {0};
-    // 8x8 font for digits 0-9 (each byte is a row, LSB left)
-    static const u8 digitFont[10][8] = {
-        {0x3C,0x66,0x6E,0x7E,0x76,0x66,0x3C,0x00}, // 0
-        {0x18,0x38,0x18,0x18,0x18,0x18,0x7E,0x00}, // 1
-        {0x3C,0x66,0x06,0x1C,0x30,0x66,0x7E,0x00}, // 2
-        {0x3C,0x66,0x06,0x1C,0x06,0x66,0x3C,0x00}, // 3
-        {0x0C,0x1C,0x3C,0x6C,0x7E,0x0C,0x0C,0x00}, // 4
-        {0x7E,0x60,0x7C,0x06,0x06,0x66,0x3C,0x00}, // 5
-        {0x3C,0x60,0x7C,0x66,0x66,0x66,0x3C,0x00}, // 6
-        {0x7E,0x06,0x0C,0x18,0x30,0x30,0x30,0x00}, // 7
-        {0x3C,0x66,0x66,0x3C,0x66,0x66,0x3C,0x00}, // 8
-        {0x3C,0x66,0x66,0x3E,0x06,0x0C,0x38,0x00}  // 9
-    };
     // OAM setup (after OBJATTR *oam = OAM;)
     // Player is OBJ 0, obstacles are OBJ 1-4
     oam[0].attr0 = ATTR0_COLOR_16 | ATTR0_SQUARE | (80 & 0xFF); // y
@@ -116,11 +101,6 @@ int main() {
         oam[1+i].attr2 = 32/32; // tile 1, palette 0
     }
 
-    // FPS counter variables
-    int frameCount = 0;
-    int fps = 0;
-    u32 lastTick = REG_VCOUNT;
-    u32 lastSecond = 0;
     int numObstacles = 4;
 
     int playerX = 120;
@@ -133,50 +113,11 @@ int main() {
         VBlankIntrWait();
         KeyInput keys = pollKeyInput();
 
-        // FPS logic: count frames, update FPS every ~60 frames (1 second at 60Hz)
-        frameCount++;
-        lastTick++;
-        if (lastTick >= 60) {
-            fps = frameCount;
-            frameCount = 0;
-            lastTick = 0;
-            // Update FPS tile to show digits using 8x8 font
-            for (int i = 0; i < 16; ++i) fpsTile[i] = 0;
-            int val = fps;
-            int digits[3] = {0};
-            int numDigits = 0;
-            do {
-                digits[numDigits++] = val % 10;
-                val /= 10;
-            } while (val && numDigits < 3);
-            // Draw digits right-aligned in 32x8 tile (up to 3 digits)
-            for (int d = 0; d < numDigits; ++d) {
-                int digit = digits[d];
-                for (int row = 0; row < 8; ++row) {
-                    u8 bits = digitFont[digit][row];
-                    for (int col = 0; col < 8; ++col) {
-                        if (bits & (1 << (7-col))) {
-                            // Each u32 is a row of 8 pixels, 4bpp (so 8 pixels per u32)
-                            // Place digits right-aligned
-                            int x = 24 - d*8 + col;
-                            if (x >= 0 && x < 32) {
-                                ((u8*)fpsTile)[row*32 + x] = 2; // blue
-                            }
-                        }
-                    }
-                }
-            }
-            DMA3COPY(fpsTile, SPRITE_GFX+96, 16 | DMA32 | DMA_IMMEDIATE); // tile 3
-        }
-
-        int prevX = playerX;
-        int prevY = playerY;
-
         // Move player (simple 4-way, no collision for now)
-    if ((keys & KeyInput::Up) != KeyInput::None)    playerY--;
-    if ((keys & KeyInput::Down) != KeyInput::None)  playerY++;
-    if ((keys & KeyInput::Left) != KeyInput::None)  playerX--;
-    if ((keys & KeyInput::Right) != KeyInput::None) playerX++;
+        if ((keys & KeyInput::Up) != KeyInput::None)    playerY--;
+        if ((keys & KeyInput::Down) != KeyInput::None)  playerY++;
+        if ((keys & KeyInput::Left) != KeyInput::None)  playerX--;
+        if ((keys & KeyInput::Right) != KeyInput::None) playerX++;
 
         // Clamp to screen
         if (playerX < 0) playerX = 0;
