@@ -5,6 +5,7 @@
 // Drawing utilities
 #include "falcon/gba/display.h"
 #include "falcon/gba/key_input.h"
+#include "falcon/gba/falcon.h"
 
 // Simple sound effect (beep)
 void playThudSound() {
@@ -34,12 +35,9 @@ void drawButtons(u16* fb, KeyInput keys) {
 
 
 int main() {
-    REG_DISPCNT = MODE_3 | BG2_ENABLE;
-    irqInit();
-    irqEnable(IRQ_VBLANK);
-    REG_SOUNDCNT_X = 0x0080;
-    REG_SOUNDCNT_L = 0x1177;
-    REG_SOUNDCNT_H = 0x0002;
+    init();
+
+    // Initialize framebuffer
     u16* fb = (u16*)VRAM;
 
     TopDownPlayer player(120, 80, 16, 16, RGB5(0, 15, 31));
