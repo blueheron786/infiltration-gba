@@ -16,7 +16,3 @@ TopDownPlayer::TopDownPlayer(int x, int y, int w, int h, u16 color)
     addComponent<Collision>(CollisionShape::Rectangle, x, y, w, h);
     addComponent<PlayerControlled>();
 }
-
-bool TopDownPlayer::collidesWith(const Obstacle& obs) const {
-    return CollisionSystem::checkCollision(*this, obs);
-}

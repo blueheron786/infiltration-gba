@@ -15,5 +15,4 @@
 class TopDownPlayer : public Node {
 public:
     TopDownPlayer(int x, int y, int w, int h, u16 color);
-    bool collidesWith(const Obstacle& obs) const;
 };

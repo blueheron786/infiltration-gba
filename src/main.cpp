@@ -91,7 +91,7 @@ int main() {
 
         bool collided = false;
         for (int i = 0; i < numObstacles; i++) {
-            if (player.collidesWith(obstacles[i])) {
+            if (CollisionSystem::checkCollision(player, obstacles[i])) {
                 // Reset position on collision
                 player.x = oldPlayerX;
                 player.y = oldPlayerY;
